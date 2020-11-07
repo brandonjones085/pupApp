@@ -1,0 +1,18 @@
+<action-bar title="Top Pup" [showBackButton]="true"></action-bar> 
+
+
+
+<CardView *ngFor="let post of posts; index as i; " class="cardStyle" margin="10" elevation="40" height="180" radius="1">
+          
+    <StackLayout class="list">  
+     <label class="name"  [text]="post.title" textWrap="true"></label>
+     <Label></Label>
+     <label class="breed"   [text]="post.content" textWrap="true"></label>
+     
+
+ </StackLayout> 
+   
+     
+
+   
+ </CardView>
