@@ -38,7 +38,7 @@
     </ListView>
 
     
-    <Button text="Submit" type="submit" (tap)="onSavePost()"></Button>
+    <Button text="Submit" (tap)="onSave()" type="submit" ></Button>
 
     <Image [src]="imageSrc" *ngIf="isSingleMode" [width]="previewSize" [height]="previewSize" stretch="aspectFit"></Image>
 </StackLayout>

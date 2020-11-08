@@ -43,7 +43,7 @@ export class UploadComponent implements OnInit {
   thumbSize: number = 80;
   previewSize: number = 300;
   img: string
- 
+ file; 
   imagePreview: string;
   private mode = "create";
   private postId: string;
@@ -53,62 +53,108 @@ export class UploadComponent implements OnInit {
 
   }
 
-onSavePost(){
-
-  this.postsService.addPost(
-    this.form.value.title,
-    this.form.value.content, 
-    this.form.value.image._android
-  );
-  console.log(this.form.value)
-  this.form.reset(); 
-  
-}
-
-
-  public onSelectSingleTap() {
-    this.isSingleMode = true;
-
-    let context = imagepicker.create({
-        mode: "single"
-    });
-    this.startSelection(context);
-}
-
-private startSelection(context) {
-    let that = this;
-
-    context
-    .authorize()
-    .then(() => {
-        that.imageAssets = [];
-        that.imageSrc = null;
-        return context.present();
-    })
-    .then((selection) => {
-       console.log("Selection done: " + JSON.stringify(selection));
-       const file = selection;    
-      
-       this.form.patchValue({'image': file})
-       
-      
-        that.imageSrc = that.isSingleMode && selection.length > 0 ? selection[0] : null;
-
-        // set the images to be loaded from the assets with optimal sizes (optimize memory usage)
-        selection.forEach(function (element) {
-            element.options.width = that.isSingleMode ? that.previewSize : that.thumbSize;
-            element.options.height = that.isSingleMode ? that.previewSize : that.thumbSize;
-        });
-
-        that.imageAssets = selection;
-    }).catch(function (e) {
-        console.log(e);
-    });
-}
+  onSave(){
+    console.log("clicked")
+    this.proccessImageUpload(this.file);
   }
 
 
 
+public onSelectSingleTap() {
+  this.isSingleMode = true;
+
+  let context = imagepicker.create({
+      mode: "single"
+  });
+  this.startSelection(context);
+}
+
+private startSelection(context) {
+  let that = this;
+
+  context
+  .authorize()
+  .then(() => {
+      that.imageAssets = [];
+      that.imageSrc = null;
+      return context.present();
+  })
+  .then((selection) => {
+     console.log("Selection done: " + JSON.stringify(selection));
+     this.file = selection[0]._android;    
+    
+     
+    
+      that.imageSrc = that.isSingleMode && selection.length > 0 ? selection[0] : null;
+
+      // set the images to be loaded from the assets with optimal sizes (optimize memory usage)
+      selection.forEach(function (element) {
+          element.options.width = that.isSingleMode ? that.previewSize : that.thumbSize;
+          element.options.height = that.isSingleMode ? that.previewSize : that.thumbSize;
+      });
+
+      that.imageAssets = selection;
+  }).catch(function (e) {
+      console.log(e);
+  });
+}
+
+  // proccess image function
+proccessImageUpload(fileUri) {
+  var backgroundHttp  = require("nativescript-background-http");
+  return new Promise((resolve, reject) => {
+      // body...
+      var request = {
+          url: 'http://192.168.0.2:4000/api/posts',
+          method: "POST",
+          headers: {
+              "Content-Type": "application/octet-stream",
+              "user_id": "<user_id>"
+          },
+          description: 'Uploading profile image..',
+          androidAutoDeleteAfterUpload: false,
+          androidNotificationTitle: 'Profile image'
+      }
+
+      var params = [
+        { name: "title", value: "test" },
+        { name: "content", value: "test" },
+        { name: "fileToUpload", filename: fileUri, mimeType: "image/jpeg" }
+     ];
+
+     var backgroundSession = backgroundHttp.session('image-upload');
+     var task = backgroundSession.uploadFile(fileUri, request);
+
+      task.on("progress", (e) => {
+          // console log data
+          console.log(`uploading... ${e.currentBytes} / ${e.totalBytes}`);
+      });
+
+      task.on("error", (e) => {
+          // console log data
+          console.log(`Error processing upload ${e.responseCode} code.`);
+          reject(`Error uploading image!`);
+      });
+
+      task.on("responded", (e) => {
+          // console log data
+          console.log(`received ${e.responseCode} code. Server sent: ${e.data}`);
+          // var uploaded_response = JSON.parse(e.data);
+      });
+
+      task.on("complete", (e) => {
+          // console log data
+          console.log(`upload complete!`);
+          console.log(`received ${e.responseCode} code`);
+          // console.log(e.data);
+      })
+
+      resolve(task);
+  });
+}
 
 
 
+
+
+  }
